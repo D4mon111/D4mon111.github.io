@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Tools</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
+:root {
+  --grass:#5D8A3C; --oak:#B8864E; --stone:#9B9B9B; --stone-dark:#6B6B6B;
+  --sky:#5B8DD9; --text:#F5F5DC; --gold:#FFD700; --red:#CC3333;
+  --green:#33AA33; --post:#6B4F2C; --bg:#1A1A2E; --panel:#16213E; --border:#0F3460;
+  --cell:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'VT323',monospace;color:var(--text);min-height:100vh;padding:16px;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(255,255,255,0.02) 32px),
+  repeating-linear-gradient(90deg,transparent,transparent 31px,rgba(255,255,255,0.02) 32px);}
+h1{font-family:'Press Start 2P',monospace;font-size:clamp(9px,2.2vw,17px);color:var(--gold);text-align:center;
+  margin-bottom:4px;text-shadow:3px 3px 0 #7A6000,-1px -1px 0 #7A6000;letter-spacing:1px;}
+.subtitle{text-align:center;font-size:19px;color:var(--stone);margin-bottom:18px;letter-spacing:2px;}
+.container{max-width:900px;margin:0 auto;}
+
+/* TABS */
+.tabs-wrap{overflow-x:auto;margin-bottom:18px;scrollbar-width:none;}
+.tabs-wrap::-webkit-scrollbar{display:none;}
+.tabs{display:flex;gap:0;border:3px solid var(--border);width:max-content;min-width:100%;}
+.tab{font-family:'Press Start 2P',monospace;font-size:7px;padding:9px 13px;cursor:pointer;
+  background:#0a0a1a;color:var(--stone);border:none;letter-spacing:1px;border-right:2px solid var(--border);white-space:nowrap;}
+.tab:last-child{border-right:none;}
+.tab:hover{background:var(--panel);color:var(--text);}
+.tab.active{background:var(--grass);color:#fff;text-shadow:1px 1px 0 rgba(0,0,0,0.5);}
+
+/* PANEL */
+.panel{background:var(--panel);border:3px solid var(--border);padding:16px;margin-bottom:16px;
+  position:relative;box-shadow:4px 4px 0 rgba(0,0,0,0.5);}
+.panel-title{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--grass);margin-bottom:14px;letter-spacing:1px;}
+.input-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+label{font-size:21px;color:var(--text);letter-spacing:1px;white-space:nowrap;}
+input[type="number"]{background:#0a0a1a;border:3px solid var(--oak);color:var(--gold);
+  font-family:'Press Start 2P',monospace;font-size:13px;padding:7px 10px;width:110px;outline:none;
+  box-shadow:inset 2px 2px 0 rgba(0,0,0,0.5);-moz-appearance:textfield;}
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;}
+input[type="number"]:focus{border-color:var(--gold);}
+.btn{background:var(--grass);border:3px solid #3D6B28;border-bottom-color:#2A4D1A;border-right-color:#2A4D1A;
+  color:#fff;font-family:'Press Start 2P',monospace;font-size:9px;padding:9px 16px;cursor:pointer;
+  letter-spacing:1px;text-shadow:1px 1px 0 rgba(0,0,0,0.5);}
+.btn:hover{background:#6A9E44;}
+.btn:active{border-top-color:#2A4D1A;border-left-color:#2A4D1A;border-bottom-color:#3D6B28;border-right-color:#3D6B28;transform:translate(1px,1px);}
+.btn-sm{font-size:8px;padding:7px 12px;}
+.notice{font-size:18px;color:var(--gold);padding:9px 12px;background:rgba(255,215,0,0.05);border-left:3px solid var(--gold);margin-bottom:14px;line-height:1.5;}
+.prime-notice{font-size:18px;color:#FF6B6B;padding:9px 12px;background:rgba(255,107,107,0.05);border-left:3px solid #FF6B6B;margin-bottom:14px;line-height:1.5;}
+.no-results{font-size:19px;color:var(--red);text-align:center;padding:16px;}
+.stats{display:flex;gap:16px;flex-wrap:wrap;font-size:19px;color:var(--stone);margin-top:10px;}
+.stats b{color:var(--text);}
+
+/* FENCE CARDS */
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:14px;}
+.result-card{background:#0a0a1a;border:2px solid var(--border);padding:11px;cursor:pointer;
+  transition:border-color 0.1s,background 0.1s;position:relative;}
+.result-card:hover{border-color:var(--oak);background:#0f0f25;}
+.result-card.selected{border-color:var(--gold);background:#12120a;}
+.result-card.selected::after{content:'SELECTED';position:absolute;bottom:5px;right:7px;
+  font-family:'Press Start 2P',monospace;font-size:5px;color:var(--gold);}
+.card-spacing{font-family:'Press Start 2P',monospace;font-size:14px;color:var(--gold);margin-bottom:5px;}
+.card-detail{font-size:17px;color:var(--stone);line-height:1.4;}
+.card-detail span{color:var(--text);}
+
+/* FENCE PREVIEW */
+.fence-preview{width:100%;overflow-x:auto;padding:14px 0;scrollbar-width:thin;scrollbar-color:var(--oak) #0a0a1a;}
+.fence-preview::-webkit-scrollbar{height:7px;}
+.fence-preview::-webkit-scrollbar-track{background:#0a0a1a;}
+.fence-preview::-webkit-scrollbar-thumb{background:var(--oak);}
+.fence-row{display:flex;align-items:flex-end;gap:0;min-width:max-content;padding:0 3px;}
+.block{width:20px;height:20px;flex-shrink:0;image-rendering:pixelated;}
+.block.post{background:var(--post);border-top:3px solid #9B7040;border-left:3px solid #9B7040;border-right:3px solid #4A3018;border-bottom:3px solid #4A3018;}
+.block.empty{background:transparent;border:1px dashed rgba(255,255,255,0.08);}
+.block.margin{background:rgba(91,141,217,0.15);border:1px solid rgba(91,141,217,0.4);}
+.fence-container{padding-bottom:22px;}
+.label-row{display:flex;min-width:max-content;padding:0 3px;margin-top:3px;}
+.label-cell{width:20px;flex-shrink:0;text-align:center;font-size:12px;color:var(--stone-dark);}
+.label-cell.highlight{color:var(--gold);}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:17px;color:var(--stone);}
+.legend-swatch{width:16px;height:16px;flex-shrink:0;}
+.legend-swatch.post{background:var(--post);border-top:2px solid #9B7040;border-left:2px solid #9B7040;border-right:2px solid #4A3018;border-bottom:2px solid #4A3018;}
+.legend-swatch.empty{background:transparent;border:1px dashed rgba(255,255,255,0.2);}
+.legend-swatch.margin{background:rgba(91,141,217,0.3);border:1px solid var(--sky);}
+.check-result{padding:12px;margin-bottom:10px;border:2px solid var(--border);background:#0a0a1a;}
+.check-result.exact{border-color:var(--green);}
+.check-result.miss{border-color:var(--red);}
+.check-result.fix{border-color:var(--sky);}
+.check-result.alt{border-color:var(--oak);}
+.check-result-title{font-family:'Press Start 2P',monospace;font-size:8px;margin-bottom:7px;}
+.check-result.exact .check-result-title{color:var(--green);}
+.check-result.miss .check-result-title{color:var(--red);}
+.check-result.fix .check-result-title{color:var(--sky);}
+.check-result.alt .check-result-title{color:var(--oak);}
+.check-result-body{font-size:18px;color:var(--stone);line-height:1.5;}
+.check-result-body b{color:var(--text);}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;}
+.chip{background:#0f0f25;border:2px solid var(--sky);padding:5px 11px;font-size:16px;cursor:pointer;transition:background 0.1s,border-color 0.1s;}
+.chip.alt-chip{border-color:var(--oak);}
+.chip:hover{background:#1a1a35;border-color:var(--gold);}
+.chip.selected{border-color:var(--gold);background:#12120a;}
+
+/* SHAPE GRID — pixel art canvas */
+.shape-wrap{overflow:auto;max-width:100%;scrollbar-width:thin;scrollbar-color:var(--oak) #0a0a1a;}
+.shape-wrap::-webkit-scrollbar{height:7px;width:7px;}
+.shape-wrap::-webkit-scrollbar-track{background:#0a0a1a;}
+.shape-wrap::-webkit-scrollbar-thumb{background:var(--oak);}
+.shape-grid{display:inline-grid;gap:1px;background:#0a0a1a;padding:4px;border:2px solid var(--border);}
+.sc{width:var(--cell);height:var(--cell);background:#0a0a1a;}
+.sc.on{background:#5D8A3C;}
+.sc.center{background:#1a3a1a;}
+.sc.axis{background:#1a2a3a;}
+
+/* SLICE VIEWER */
+.slice-nav{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.slice-label{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--gold);min-width:120px;}
+.slice-bar{flex:1;min-width:200px;display:flex;gap:2px;align-items:center;}
+.slice-btn{background:#0a0a1a;border:2px solid var(--border);color:var(--stone);font-family:'Press Start 2P',monospace;
+  font-size:8px;padding:5px 10px;cursor:pointer;}
+.slice-btn:hover{border-color:var(--oak);color:var(--text);}
+.slice-info{font-size:18px;color:var(--stone);margin-left:6px;}
+.slice-info b{color:var(--text);}
+input[type="range"]{-webkit-appearance:none;appearance:none;height:6px;background:var(--border);outline:none;flex:1;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--gold);cursor:pointer;border:2px solid #7A6000;}
+input[type="range"]::-moz-range-thumb{width:16px;height:16px;background:var(--gold);cursor:pointer;border:2px solid #7A6000;}
+
+.block-count{font-size:18px;color:var(--stone);margin-top:8px;}
+.block-count b{color:var(--gold);}
+
+@media(max-width:560px){
+  input[type="number"]{width:80px;font-size:11px;}
+  .btn{font-size:7px;padding:7px 10px;}
+  .tab{font-size:6px;padding:7px 9px;}
+  :root{--cell:11px;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>&#9651; MINECRAFT TOOLS &#9651;</h1>
+  <p class="subtitle">// BUILDER'S COMPANION //</p>
+
+  <div class="tabs-wrap">
+    <div class="tabs">
+      <button class="tab active" id="tab-find"    onclick="switchTab('find')">FENCE SPACING</button>
+      <button class="tab"        id="tab-check"   onclick="switchTab('check')">CHECK FENCE</button>
+      <button class="tab"        id="tab-circle"  onclick="switchTab('circle')">CIRCLE</button>
+      <button class="tab"        id="tab-oval"    onclick="switchTab('oval')">OVAL</button>
+      <button class="tab"        id="tab-sphere"  onclick="switchTab('sphere')">SPHERE</button>
+      <button class="tab"        id="tab-ellipse" onclick="switchTab('ellipse')">3D OVAL</button>
+      <button class="tab"        id="tab-torus"   onclick="switchTab('torus')">TORUS</button>
+      <button class="tab"        id="tab-stair"   onclick="switchTab('stair')">STAIRCASE</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ FENCE FIND ═══════════════ -->
+  <div id="mode-find">
+    <div class="panel">
+      <div class="panel-title">&#9658; FIND ALL SPACINGS FOR A LENGTH</div>
+      <div class="input-row">
+        <label for="f-length">FENCE LENGTH (L):</label>
+        <input type="number" id="f-length" min="2" max="512" value="90">
+        <button class="btn" onclick="runFind()">CALCULATE</button>
+      </div>
+      <div style="font-size:17px;color:var(--stone-dark);line-height:1.6">
+        Posts fixed at block 0 and block L-1. Spacing = distance between posts including the post block.
+      </div>
+    </div>
+    <div id="find-output"></div>
+    <div id="find-preview" style="display:none">
+      <div class="panel">
+        <div class="panel-title">&#9658; PREVIEW</div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-swatch post"></div> Post</div>
+          <div class="legend-item"><div class="legend-swatch empty"></div> Gap</div>
+          <div class="legend-item"><div class="legend-swatch margin"></div> Margin</div>
+        </div>
+        <div id="find-preview-content"></div>
+        <div class="stats" id="find-preview-stats"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ FENCE CHECK ═══════════════ -->
+  <div id="mode-check" style="display:none">
+    <div class="panel">
+      <div class="panel-title">&#9658; CHECK A SPECIFIC SPACING</div>
+      <div class="input-row">
+        <label for="c-length">FENCE LENGTH (L):</label>
+        <input type="number" id="c-length" min="2" max="512" value="90">
+      </div>
+      <div class="input-row">
+        <label for="c-spacing">DESIRED SPACING (S):</label>
+        <input type="number" id="c-spacing" min="1" max="256" value="8">
+        <button class="btn" onclick="runCheck()">CHECK</button>
+      </div>
+      <div style="font-size:17px;color:var(--stone-dark);line-height:1.6">Does spacing S divide L-1 exactly? If not, find the nearest fix.</div>
+    </div>
+    <div id="check-output"></div>
+    <div id="check-preview" style="display:none">
+      <div class="panel">
+        <div class="panel-title">&#9658; PREVIEW</div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-swatch post"></div> Post</div>
+          <div class="legend-item"><div class="legend-swatch empty"></div> Gap</div>
+          <div class="legend-item"><div class="legend-swatch margin"></div> Margin</div>
+        </div>
+        <div id="check-preview-content"></div>
+        <div class="stats" id="check-preview-stats"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CIRCLE ═══════════════ -->
+  <div id="mode-circle" style="display:none">
+    <div class="panel">
+      <div class="panel-title">&#9658; PIXEL CIRCLE GENERATOR</div>
+      <div class="input-row">
+        <label for="circ-r">RADIUS (r):</label>
+        <input type="number" id="circ-r" min="1" max="80" value="10">
+        <button class="btn" onclick="runCircle()">GENERATE</button>
+      </div>
+      <div style="font-size:17px;color:var(--stone-dark);line-height:1.6">Generates a Bresenham pixel-perfect circle. Radius = distance from center to edge in blocks.</div>
+    </div>
+    <div id="circle-output"></div>
+  </div>
+
+  <!-- ═══════════════ OVAL ═══════════════ -->
+  <div id="mode-oval" style="display:none">
+    <div class="panel">
+      <div class="panel-title">&#9658; PIXEL OVAL (2D ELLIPSE)</div>
+      <div class="input-row">
+        <label for="oval-rx">RADIUS X:</label>
+        <input type="number" id="oval-rx" min="1" max="80" value="12">
+        <label for="oval-ry">RADIUS Y:</label>
+        <input type="number" id="oval-ry" min="1" max="80" value="7">
+        <button class="btn" onclick="runOval()">GENERATE</button>
+      </div>
+      <div style="font-size:17px;color:var(--stone-dark);line-height:1.6">Pixel-perfect ellipse outline. rx = half-width, ry = half-height.</div>
+    </div>
+    <div id="oval-output"></div>
+  </div>
+
+  <!-- ═══════════════ SPHERE ═══════════════ -->
+  <div id="mode-sphere" style="display:none">
+    <div class="panel">
+      <div class="panel-title">&#9658; SPHERE (3D) — SLICE VIEW</div>
+      <div class="input-row">
+        <label for="sph-r">RADIUS (r):</label>
+        <input type="number" id="sph-r" min="1" max="60" value="8">
+        <button class="btn" onclick="runSphere()">GENERATE</button>
+      </div>
+      <div style="font-size:17px;color:var(--stone-dark);line-height:1.6">Shows each horizontal Y-layer of a voxel sphere. Use the slider to cycle slices.</div>
+    </div>
+    <div id="sphere-output"></div>
+  </div>
+
+  <!-- ═══════════════ 3D OVAL ═══════════════ -->
+  <div id="mode-ellipse" style="display:none">
+    <div class="panel">
+      <div class="panel-title">&#9658; 3D OVAL (ELLIPSOID) — SLICE VIEW</div>
+      <div class="input-row">
+        <label for="ell-rx">RADIUS X:</label>
+        <input type="number" id="ell-rx" min="1" max="60" value="10">
+        <label for="ell-ry">RADIUS Y:</label>
+        <input type="number" id="ell-ry" min="1" max="60" value="6">
+        <label for="ell-rz">RADIUS Z:</label>
+        <input type="number" id="ell-rz" min="1" max="60" value="8">
+        <button class="btn" onclick="runEllipsoid()">GENERATE</button>
+      </div>
+      <div style="font-size:17px;color:var(--stone-dark);line-height:1.6">rx = east-west, ry = up-down height, rz = north-south. Slide through Y layers.</div>
+    </div>
+    <div id="ellipse-output"></div>
+  </div>
+
+  <!-- ═══════════════ TORUS ═══════════════ -->
+  <div id="mode-torus" style="display:none">
+    <div class="panel">
+      <div class="panel-title">&#9658; TORUS (DONUT) — SLICE VIEW</div>
+      <div class="input-row">
+        <label for="tor-R">OUTER R:</label>
+        <input type="number" id="tor-R" min="2" max="50" value="10">
+        <label for="tor-r">TUBE R:</label>
+        <input type="number" id="tor-r" min="1" max="30" value="3">
+        <button class="btn" onclick="runTorus()">GENERATE</button>
+      </div>
+      <div style="font-size:17px;color:var(--stone-dark);line-height:1.6">Outer R = center to tube center. Tube R = tube thickness. Shows Y-slices of a donut shape.</div>
+    </div>
+    <div id="torus-output"></div>
+  </div>
+
+  <!-- ═══════════════ STAIRCASE ═══════════════ -->
+  <div id="mode-stair" style="display:none">
+    <div class="panel">
+      <div class="panel-title">&#9658; STAIRCASE PLANNER</div>
+      <div class="input-row">
+        <label for="st-rise">TOTAL RISE (blocks up):</label>
+        <input type="number" id="st-rise" min="1" max="256" value="10">
+      </div>
+      <div class="input-row">
+        <label for="st-run">TOTAL RUN (blocks across):</label>
+        <input type="number" id="st-run" min="1" max="256" value="10">
+        <button class="btn" onclick="runStair()">CALCULATE</button>
+      </div>
+      <div style="font-size:17px;color:var(--stone-dark);line-height:1.6">Plans a pixel-perfect staircase from A to B, showing where each step block goes.</div>
+    </div>
+    <div id="stair-output"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════════════
+function switchTab(name) {
+  var names = ['find','check','circle','oval','sphere','ellipse','torus','stair'];
+  for (var i = 0; i < names.length; i++) {
+    document.getElementById('mode-' + names[i]).style.display = (names[i] === name) ? '' : 'none';
+    document.getElementById('tab-' + names[i]).className = 'tab' + (names[i] === name ? ' active' : '');
+  }
+}
+
+function isPrime(n) {
+  if (n < 2) return false;
+  if (n === 2) return true;
+  if (n % 2 === 0) return false;
+  for (var i = 3; i <= Math.sqrt(n); i += 2) { if (n % i === 0) return false; }
+  return true;
+}
+function getDivisors(n) {
+  var d = [];
+  if (n <= 0) return d;
+  for (var i = 2; i <= n; i++) { if (n % i === 0) d.push(i); }
+  return d;
+}
+function findMarginSolutions(L, maxM) {
+  maxM = maxM || 15;
+  var sols = [], seen = {};
+  for (var m = 1; m <= maxM; m++) {
+    var nL = L - 2*m;
+    if (nL < 3) break;
+    var sp = nL - 1;
+    var divs = getDivisors(sp);
+    for (var j = 0; j < divs.length; j++) {
+      var s = divs[j];
+      var k = m + '-' + s;
+      if (!seen[k]) { seen[k] = 1; sols.push({margin:m,spacing:s,newL:nL,span:sp,posts:sp/s+1}); }
+    }
+  }
+  sols.sort(function(a,b){ return a.margin !== b.margin ? a.margin - b.margin : a.spacing - b.spacing; });
+  return sols;
+}
+
+// ── fence rendering ──
+function renderFence(L, spacing, margin) {
+  margin = margin || 0;
+  var pp = {};
+  var is = margin, ie = L-1-margin;
+  for (var p = is; p <= ie; p += spacing) pp[p] = 1;
+  pp[is] = pp[ie] = 1;
+  var maxShow = 120, showAll = L <= maxShow, sc = showAll ? L : maxShow;
+  var rowH = '', labH = '';
+  for (var i = 0; i < sc; i++) {
+    var isP = !!pp[i], isMg = margin>0 && (i<margin || i>L-1-margin);
+    var cls = 'block ' + (isP ? 'post' : isMg ? 'margin' : 'empty');
+    rowH += '<div class="' + cls + '" title="Block ' + i + '"></div>';
+    var show = isP || i===0 || i===L-1;
+    labH += '<div class="label-cell' + (isP?' highlight':'') + '">' + (show?i:'') + '</div>';
+  }
+  if (!showAll) rowH += '<div style="font-size:15px;color:#9B9B9B;align-self:center;padding-left:7px">...+' + (L-maxShow) + ' more</div>';
+  return {
+    html: '<div class="fence-container"><div class="fence-preview"><div class="fence-row">' + rowH + '</div><div class="label-row">' + labH + '</div></div></div>',
+    postCount: Object.keys(pp).length
+  };
+}
+
+// ══════════════════════════════════════════════
+// FENCE FIND
+// ══════════════════════════════════════════════
+var findL = 90;
+function runFind() {
+  findL = parseInt(document.getElementById('f-length').value, 10);
+  var out = document.getElementById('find-output');
+  var prev = document.getElementById('find-preview');
+  if (isNaN(findL) || findL < 2) {
+    out.innerHTML = '<div class="panel"><p class="no-results">ENTER A LENGTH OF 2 OR MORE</p></div>';
+    prev.style.display = 'none'; return;
+  }
+  var span = findL - 1, divs = getDivisors(span), prime = isPrime(span);
+  var html = '<div class="panel"><div class="panel-title">EXACT SOLUTIONS (L=' + findL + ', span=' + span + ')</div>';
+  if (prime) html += '<div class="prime-notice">L-1 = ' + span + ' IS PRIME. Only trivial spacings exist. See margin solutions below.</div>';
+  if (divs.length > 0) {
+    html += '<div class="results-grid">';
+    for (var i = 0; i < divs.length; i++) {
+      var d = divs[i], posts = span/d+1;
+      html += '<div class="result-card" data-l="'+findL+'" data-s="'+d+'" data-m="0">'
+            + '<div class="card-spacing">SPACING: '+d+'</div>'
+            + '<div class="card-detail">Posts: <span>'+posts+'</span><br>Gaps: <span>'+(posts-1)+'</span><br>Span: <span>'+span+'</span></div></div>';
+    }
+    html += '</div>';
+  } else {
+    html += '<div style="font-size:17px;color:#6B6B6B;padding:7px 0">No non-trivial exact divisors.</div>';
+  }
+  html += '</div>';
+  var mSols = findMarginSolutions(findL, 15);
+  if (mSols.length > 0) {
+    html += '<div class="panel"><div class="panel-title">MARGIN SOLUTIONS (lowest margin + spacing, top-left)</div>';
+    html += '<div class="notice">Add equal margins to each end. Sorted lowest margin then lowest spacing. Star = spacing equals margin.</div>';
+    html += '<div class="results-grid">';
+    var sh = Math.min(mSols.length, 18);
+    for (var i = 0; i < sh; i++) {
+      var s = mSols[i], star = (s.spacing===s.margin)?' *':'';
+      html += '<div class="result-card" data-l="'+findL+'" data-s="'+s.spacing+'" data-m="'+s.margin+'">'
+            + '<div class="card-spacing">SPACING: '+s.spacing+star+'</div>'
+            + '<div class="card-detail">Margin: <span>'+s.margin+'</span> each side<br>Active L: <span>'+s.newL+'</span><br>Posts: <span>'+s.posts+'</span></div></div>';
+    }
+    html += '</div></div>';
+  }
+  out.innerHTML = html; prev.style.display = 'none';
+  var cards = out.querySelectorAll('.result-card');
+  for (var i = 0; i < cards.length; i++) {
+    (function(c){ c.addEventListener('click', function(){ selectFindCard(c); }); })(cards[i]);
+  }
+  if (cards.length > 0) selectFindCard(cards[0]);
+}
+function selectFindCard(card) {
+  document.querySelectorAll('#find-output .result-card').forEach(function(c){c.classList.remove('selected');});
+  card.classList.add('selected');
+  showFindPreview(+card.getAttribute('data-l'), +card.getAttribute('data-s'), +card.getAttribute('data-m'));
+}
+function showFindPreview(L, S, M) {
+  var r = renderFence(L, S, M);
+  document.getElementById('find-preview-content').innerHTML = r.html;
+  var st = 'Posts: <b>'+r.postCount+'</b> &nbsp; Spacing: <b>'+S+'</b>';
+  if (M > 0) st += ' &nbsp; Margin: <b>'+M+'</b> each side &nbsp; Active L: <b>'+(L-2*M)+'</b>';
+  st += ' &nbsp; Total L: <b>'+L+'</b>';
+  document.getElementById('find-preview-stats').innerHTML = st;
+  document.getElementById('find-preview').style.display = '';
+}
+
+// ══════════════════════════════════════════════
+// FENCE CHECK
+// ══════════════════════════════════════════════
+function runCheck() {
+  var checkL = +document.getElementById('c-length').value;
+  var checkS = +document.getElementById('c-spacing').value;
+  var out = document.getElementById('check-output'), prev = document.getElementById('check-preview');
+  if (isNaN(checkL)||checkL<2){out.innerHTML='<div class="panel"><p class="no-results">ENTER A LENGTH >= 2</p></div>';prev.style.display='none';return;}
+  if (isNaN(checkS)||checkS<1){out.innerHTML='<div class="panel"><p class="no-results">ENTER A SPACING >= 1</p></div>';prev.style.display='none';return;}
+  var span = checkL - 1;
+  var html = '<div class="panel"><div class="panel-title">RESULTS (L='+checkL+', S='+checkS+')</div>';
+  if (span % checkS === 0) {
+    var posts = span/checkS+1;
+    html += '<div class="check-result exact"><div class="check-result-title">EXACT MATCH</div>'
+          + '<div class="check-result-body">Spacing <b>'+checkS+'</b> divides L-1 = <b>'+span+'</b> exactly.<br>Posts: <b>'+posts+'</b> | Gaps: <b>'+(posts-1)+'</b></div></div>';
+  } else {
+    var rem = span % checkS;
+    html += '<div class="check-result miss"><div class="check-result-title">NO EXACT MATCH</div>'
+          + '<div class="check-result-body">Spacing <b>'+checkS+'</b> does NOT divide <b>'+span+'</b>.<br>Remainder: <b>'+rem+'</b> — cut <b>'+rem+'</b> or add <b>'+(checkS-rem)+'</b> to reach next multiple.</div></div>';
+    var mFixes = [];
+    for (var m = 1; m <= Math.min(60,Math.floor((checkL-3)/2)); m++) {
+      var ns = checkL-2*m-1; if (ns<1) break;
+      if (ns%checkS===0) mFixes.push({margin:m,newL:checkL-2*m,posts:ns/checkS+1});
+    }
+    var near = [];
+    for (var d = 1; d <= 30; d++) {
+      [[checkL-d,checkL-d-checkL],[checkL+d,d]].forEach(function(pair){
+        var nL = pair[0]; if (nL<2) return;
+        if ((nL-1)%checkS===0) near.push({newL:nL,delta:nL-checkL,posts:(nL-1)/checkS+1});
+      });
+    }
+    near.sort(function(a,b){return Math.abs(a.delta)-Math.abs(b.delta);});
+    if (mFixes.length > 0) {
+      html += '<div class="check-result fix"><div class="check-result-title">MARGIN FIXES (keep spacing '+checkS+')</div>'
+            + '<div class="check-result-body">Add equal margins to each end:</div><div class="chips">';
+      for (var i = 0; i < Math.min(mFixes.length,8); i++) {
+        var f = mFixes[i];
+        html += '<div class="chip" data-fix-l="'+checkL+'" data-fix-s="'+checkS+'" data-fix-m="'+f.margin+'">'
+              + 'margin <b>'+f.margin+'</b> = L '+f.newL+', <b>'+f.posts+'</b> posts</div>';
+      }
+      html += '</div></div>';
+    }
+    if (near.length > 0) {
+      html += '<div class="check-result alt"><div class="check-result-title">NEARBY LENGTHS THAT WORK</div>'
+            + '<div class="check-result-body">Adjust your fence length:</div><div class="chips">';
+      for (var i = 0; i < Math.min(near.length,8); i++) {
+        var nf = near[i], sg = nf.delta>0?'+':'';
+        html += '<div class="chip alt-chip" data-fix-l="'+nf.newL+'" data-fix-s="'+checkS+'" data-fix-m="0">'
+              + 'L'+sg+nf.delta+'=<b>'+nf.newL+'</b>, <b>'+nf.posts+'</b> posts</div>';
+      }
+      html += '</div></div>';
+    }
+  }
+  html += '</div>';
+  out.innerHTML = html; prev.style.display = 'none';
+  var chips = out.querySelectorAll('.chip');
+  for (var i = 0; i < chips.length; i++) {
+    (function(c){ c.addEventListener('click', function(){ selectCheckChip(c); }); })(chips[i]);
+  }
+  if (span%checkS===0) { showCheckPreview(checkL,checkS,0); }
+  else if (chips.length>0) { selectCheckChip(chips[0]); }
+}
+function selectCheckChip(chip) {
+  document.querySelectorAll('#check-output .chip').forEach(function(c){c.classList.remove('selected');});
+  chip.classList.add('selected');
+  showCheckPreview(+chip.getAttribute('data-fix-l'), +chip.getAttribute('data-fix-s'), +chip.getAttribute('data-fix-m'));
+}
+function showCheckPreview(L,S,M) {
+  var r = renderFence(L,S,M);
+  document.getElementById('check-preview-content').innerHTML = r.html;
+  var st = 'Posts: <b>'+r.postCount+'</b> &nbsp; Spacing: <b>'+S+'</b>';
+  if (M>0) st += ' &nbsp; Margin: <b>'+M+'</b> each side &nbsp; Active L: <b>'+(L-2*M)+'</b>';
+  st += ' &nbsp; Total L: <b>'+L+'</b>';
+  document.getElementById('check-preview-stats').innerHTML = st;
+  document.getElementById('check-preview').style.display = '';
+}
+
+// ══════════════════════════════════════════════
+// SHAPE GRID RENDERER
+// ══════════════════════════════════════════════
+function makeGrid(cells, W, H) {
+  // cells = Set of "x,y" strings that are ON
+  var html = '<div class="shape-grid" style="grid-template-columns:repeat('+W+',var(--cell))">';
+  for (var y = 0; y < H; y++) {
+    for (var x = 0; x < W; x++) {
+      var on = cells[''+x+','+y];
+      html += '<div class="sc' + (on?' on':'') + '"></div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+// ══════════════════════════════════════════════
+// CIRCLE (Bresenham midpoint)
+// ══════════════════════════════════════════════
+function bresenhamCircle(r) {
+  var pts = {};
+  var x = 0, y = r, d = 1 - r;
+  function plot8(cx,cy) {
+    [[cx,cy],[cx,-cy],[-cx,cy],[-cx,-cy],[cy,cx],[cy,-cx],[-cy,cx],[-cy,-cx]].forEach(function(p){
+      pts[(r+p[0])+','+(r+p[1])] = 1;
+    });
+  }
+  while (x <= y) {
+    plot8(x, y);
+    if (d < 0) { d += 2*x+3; }
+    else { d += 2*(x-y)+5; y--; }
+    x++;
+  }
+  return pts;
+}
+
+function runCircle() {
+  var r = parseInt(document.getElementById('circ-r').value, 10);
+  var out = document.getElementById('circle-output');
+  if (isNaN(r) || r < 1 || r > 80) { out.innerHTML = '<div class="panel"><p class="no-results">RADIUS: 1-80</p></div>'; return; }
+  var pts = bresenhamCircle(r);
+  var D = 2*r+1;
+  var count = Object.keys(pts).length;
+  var html = '<div class="panel"><div class="panel-title">CIRCLE r='+r+' ('+D+'x'+D+' blocks)</div>';
+  html += '<div class="shape-wrap">' + makeGrid(pts, D, D) + '</div>';
+  html += '<div class="block-count">Blocks: <b>'+count+'</b> &nbsp; Diameter: <b>'+D+'</b></div></div>';
+  out.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// OVAL (pixel ellipse — midpoint algorithm)
+// ══════════════════════════════════════════════
+function pixelEllipse(rx, ry) {
+  var pts = {};
+  function plot4(cx,cy,ox,oy) {
+    pts[(rx+cx)+','+(ry+cy)]=1; pts[(rx-cx)+','+(ry+cy)]=1;
+    pts[(rx+cx)+','+(ry-cy)]=1; pts[(rx-cx)+','+(ry-cy)]=1;
+    if (ox !== undefined) {
+      pts[(rx+ox)+','+(ry+oy)]=1; pts[(rx-ox)+','+(ry+oy)]=1;
+      pts[(rx+ox)+','+(ry-oy)]=1; pts[(rx-ox)+','+(ry-oy)]=1;
+    }
+  }
+  var x=0, y=ry;
+  var rx2=rx*rx, ry2=ry*ry;
+  var d = ry2 - rx2*ry + 0.25*rx2;
+  var dx=0, dy=2*rx2*y;
+  while (dx < dy) {
+    plot4(x,y); x++;
+    dx += 2*ry2;
+    if (d<0) { d += ry2*(2*x+1); }
+    else { y--; dy -= 2*rx2; d += ry2*(2*x+1) - 2*rx2*y; }
+  }
+  d = ry2*(x+0.5)*(x+0.5) + rx2*(y-1)*(y-1) - rx2*ry2;
+  while (y >= 0) {
+    plot4(x,y); y--;
+    if (d>0) { d -= rx2*(2*y+1); }
+    else { x++; d += 2*ry2*x - rx2*(2*y+1); }
+  }
+  return pts;
+}
+
+function runOval() {
+  var rx = +document.getElementById('oval-rx').value;
+  var ry = +document.getElementById('oval-ry').value;
+  var out = document.getElementById('oval-output');
+  if (isNaN(rx)||rx<1||rx>80||isNaN(ry)||ry<1||ry>80) { out.innerHTML='<div class="panel"><p class="no-results">RADII: 1-80</p></div>'; return; }
+  var pts = pixelEllipse(rx, ry);
+  var W = 2*rx+1, H = 2*ry+1, count = Object.keys(pts).length;
+  var html = '<div class="panel"><div class="panel-title">OVAL rx='+rx+' ry='+ry+' ('+W+'x'+H+' blocks)</div>';
+  html += '<div class="shape-wrap">' + makeGrid(pts, W, H) + '</div>';
+  html += '<div class="block-count">Blocks: <b>'+count+'</b> &nbsp; Width: <b>'+W+'</b> &nbsp; Height: <b>'+H+'</b></div></div>';
+  out.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// SPHERE + ELLIPSOID — shared slice viewer
+// ══════════════════════════════════════════════
+var shapeSlices = [];   // array of { cells, W, H, count }
+var shapeName = '';
+var curSlice = 0;
+
+function buildSphereSlices(r) {
+  var slices = [];
+  for (var y = -r; y <= r; y++) {
+    var ry2 = Math.sqrt(r*r - y*y);
+    var pts = bresenhamCircle(Math.round(ry2));
+    var D = 2*Math.round(ry2)+1;
+    var pad = r - Math.round(ry2);
+    // embed in full r*2+1 grid
+    var full = {}, D2 = 2*r+1;
+    for (var k in pts) {
+      var parts = k.split(',');
+      var px = parseInt(parts[0],10) + pad;
+      var py = parseInt(parts[1],10) + pad;
+      full[px+','+py] = 1;
+    }
+    slices.push({ cells: full, W: D2, H: D2, count: Object.keys(pts).length, y: y });
+  }
+  return slices;
+}
+
+function buildEllipsoidSlices(rx, ry, rz) {
+  var slices = [];
+  for (var y = -ry; y <= ry; y++) {
+    // at height y, horizontal cross-section is ellipse with rx' and rz'
+    var frac = 1 - (y/ry)*(y/ry);
+    if (frac < 0) frac = 0;
+    var rxS = Math.round(rx * Math.sqrt(frac));
+    var rzS = Math.round(rz * Math.sqrt(frac));
+    var cells = {}, W = 2*rx+1, H = 2*rz+1;
+    if (rxS < 1 || rzS < 1) {
+      // single center block
+      cells[rx+','+rz] = 1;
+    } else {
+      var raw = pixelEllipse(rxS, rzS);
+      var padX = rx - rxS, padZ = rz - rzS;
+      for (var k in raw) {
+        var p = k.split(',');
+        cells[(parseInt(p[0],10)+padX)+','+(parseInt(p[1],10)+padZ)] = 1;
+      }
+    }
+    slices.push({ cells: cells, W: W, H: H, count: Object.keys(cells).length, y: y });
+  }
+  return slices;
+}
+
+function buildTorusSlices(R, r) {
+  var yMax = r;
+  var slices = [];
+  for (var y = -yMax; y <= yMax; y++) {
+    // At height y, cross-section of torus: circle of radius sqrt(r^2 - y^2)
+    // centered at R from origin — so it's an annulus
+    var tubeSliceR = Math.sqrt(r*r - y*y);
+    if (isNaN(tubeSliceR) || tubeSliceR < 0) tubeSliceR = 0;
+    var outerR = R + tubeSliceR;
+    var innerR = R - tubeSliceR;
+    var D = 2*(R+r)+1, cx = R+r, cz = R+r;
+    var cells = {};
+    // draw outer circle, erase inner circle
+    var outerPts = bresenhamCircle(Math.round(outerR));
+    var innerPts = innerR > 1 ? bresenhamCircle(Math.round(innerR)) : {};
+    // fill between outer and inner
+    // use scanline fill approach
+    var outerFill = floodFill(Math.round(outerR));
+    var innerFill = innerR > 1 ? floodFill(Math.round(innerR)) : {};
+    var oD = 2*Math.round(outerR)+1, iD = 2*Math.round(innerR)+1;
+    var oPad = (R+r) - Math.round(outerR);
+    var iPad = (R+r) - Math.round(innerR);
+    for (var k in outerFill) {
+      var p = k.split(','), px = parseInt(p[0],10)+oPad, py = parseInt(p[1],10)+oPad;
+      cells[px+','+py] = 1;
+    }
+    for (var k in innerFill) {
+      var p = k.split(','), px = parseInt(p[0],10)+iPad, py = parseInt(p[1],10)+iPad;
+      delete cells[px+','+py];
+    }
+    slices.push({ cells: cells, W: D, H: D, count: Object.keys(cells).length, y: y });
+  }
+  return slices;
+}
+
+function floodFill(r) {
+  // filled circle using Bresenham scanlines
+  var pts = {};
+  var x = 0, y = r, d = 1 - r;
+  function fillRow(cy, x1, x2) {
+    var D = 2*r+1;
+    for (var xx = x1; xx <= x2; xx++) {
+      pts[(r+xx)+','+(r+cy)] = 1;
+      pts[(r+xx)+','+(r-cy)] = 1;
+    }
+  }
+  while (x <= y) {
+    fillRow(y, -x, x);
+    fillRow(x, -y, y);
+    if (d < 0) { d += 2*x+3; }
+    else { d += 2*(x-y)+5; y--; }
+    x++;
+  }
+  return pts;
+}
+
+function renderSliceViewer(containerId, slices, title, axisLabel) {
+  axisLabel = axisLabel || 'Y';
+  var out = document.getElementById(containerId);
+  shapeSlices = slices;
+  curSlice = Math.floor(slices.length / 2);
+  var total = slices.length;
+
+  var html = '<div class="panel" id="slv-panel-'+containerId+'">';
+  html += '<div class="panel-title">'+title+'</div>';
+  html += '<div class="slice-nav">';
+  html += '<div class="slice-label" id="slv-label-'+containerId+'">'+axisLabel+' SLICE: 0/'+total+'</div>';
+  html += '<button class="btn btn-sm" id="slv-prev-'+containerId+'">&#9664; PREV</button>';
+  html += '<input type="range" id="slv-range-'+containerId+'" min="0" max="'+(total-1)+'" value="'+curSlice+'">';
+  html += '<button class="btn btn-sm" id="slv-next-'+containerId+'">NEXT &#9654;</button>';
+  html += '<div class="slice-info" id="slv-info-'+containerId+'"></div>';
+  html += '</div>';
+  html += '<div class="shape-wrap" id="slv-grid-'+containerId+'"></div>';
+  html += '<div class="block-count" id="slv-count-'+containerId+'"></div>';
+  html += '</div>';
+  out.innerHTML = html;
+
+  function update(idx) {
+    if (idx < 0) idx = 0;
+    if (idx >= total) idx = total - 1;
+    curSlice = idx;
+    var sl = slices[idx];
+    document.getElementById('slv-range-'+containerId).value = idx;
+    var yVal = sl.y !== undefined ? sl.y : (idx - Math.floor(total/2));
+    document.getElementById('slv-label-'+containerId).textContent = axisLabel + ' SLICE: ' + (idx+1) + '/' + total;
+    document.getElementById('slv-info-'+containerId).innerHTML = axisLabel+'=<b>'+yVal+'</b>';
+    document.getElementById('slv-grid-'+containerId).innerHTML = makeGrid(sl.cells, sl.W, sl.H);
+    document.getElementById('slv-count-'+containerId).innerHTML = 'Blocks this layer: <b>'+sl.count+'</b>';
+  }
+
+  document.getElementById('slv-prev-'+containerId).addEventListener('click', function(){ update(curSlice - 1); });
+  document.getElementById('slv-next-'+containerId).addEventListener('click', function(){ update(curSlice + 1); });
+  document.getElementById('slv-range-'+containerId).addEventListener('input', function(){
+    update(parseInt(this.value, 10));
+  });
+
+  // keyboard nav when focused
+  document.getElementById('slv-range-'+containerId).addEventListener('keydown', function(e){
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') update(curSlice - 1);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') update(curSlice + 1);
+  });
+
+  update(curSlice);
+}
+
+function runSphere() {
+  var r = +document.getElementById('sph-r').value;
+  var out = document.getElementById('sphere-output');
+  if (isNaN(r)||r<1||r>60){out.innerHTML='<div class="panel"><p class="no-results">RADIUS: 1-60</p></div>';return;}
+  var slices = buildSphereSlices(r);
+  var total = slices.reduce(function(a,s){return a+s.count;},0);
+  renderSliceViewer('sphere-output', slices, 'SPHERE r='+r+' ('+(2*r+1)+'x'+(2*r+1)+'x'+(2*r+1)+') — TOTAL BLOCKS: '+total, 'Y');
+}
+
+function runEllipsoid() {
+  var rx = +document.getElementById('ell-rx').value;
+  var ry = +document.getElementById('ell-ry').value;
+  var rz = +document.getElementById('ell-rz').value;
+  var out = document.getElementById('ellipse-output');
+  if (isNaN(rx)||rx<1||rx>60||isNaN(ry)||ry<1||ry>60||isNaN(rz)||rz<1||rz>60){
+    out.innerHTML='<div class="panel"><p class="no-results">RADII: 1-60</p></div>';return;
+  }
+  var slices = buildEllipsoidSlices(rx, ry, rz);
+  var total = slices.reduce(function(a,s){return a+s.count;},0);
+  renderSliceViewer('ellipse-output', slices, '3D OVAL rx='+rx+' ry='+ry+' rz='+rz+' — TOTAL BLOCKS: '+total, 'Y');
+}
+
+function runTorus() {
+  var R = +document.getElementById('tor-R').value;
+  var r = +document.getElementById('tor-r').value;
+  var out = document.getElementById('torus-output');
+  if (isNaN(R)||R<2||isNaN(r)||r<1||r>=R){out.innerHTML='<div class="panel"><p class="no-results">TUBE R must be smaller than OUTER R</p></div>';return;}
+  var slices = buildTorusSlices(R, r);
+  var total = slices.reduce(function(a,s){return a+s.count;},0);
+  renderSliceViewer('torus-output', slices, 'TORUS R='+R+' r='+r+' — TOTAL BLOCKS: '+total, 'Y');
+}
+
+// ══════════════════════════════════════════════
+// STAIRCASE
+// ══════════════════════════════════════════════
+function runStair() {
+  var rise = +document.getElementById('st-rise').value;
+  var run  = +document.getElementById('st-run').value;
+  var out  = document.getElementById('stair-output');
+  if (isNaN(rise)||rise<1||isNaN(run)||run<1){out.innerHTML='<div class="panel"><p class="no-results">RISE AND RUN MUST BE >= 1</p></div>';return;}
+
+  // Bresenham-style: for each of `run` columns, how many blocks tall?
+  // We place a stair block at the top of each column
+  var grid = []; // grid[x][y] = type: 'stair', 'fill', 'air'
+  for (var x = 0; x < run; x++) grid[x] = [];
+
+  // top of column x = Math.round(rise * (x+1) / run)
+  var colHeights = [];
+  for (var x = 0; x < run; x++) {
+    colHeights[x] = Math.round(rise * (x + 1) / run);
+  }
+  var maxH = colHeights[run-1]; // should equal rise
+
+  // render: bottom of grid = y=0, top = y=maxH
+  // each column: blocks from y=0 to y=colHeight-1, top block is stair
+  var W = run, H = maxH;
+  var cells = {}; // "x,y" -> 'stair' or 'fill'
+  var stairCells = {}, fillCells = {};
+
+  for (var x = 0; x < W; x++) {
+    var h = colHeights[x];
+    for (var yy = 0; yy < h; yy++) {
+      // flip y so 0 is bottom: store as grid row = (H - 1 - yy)
+      var row = H - 1 - yy;
+      if (yy === h - 1) stairCells[x+','+row] = 1;
+      else fillCells[x+','+row] = 1;
+    }
+  }
+
+  var stairBlocks = Object.keys(stairCells).length;
+  var fillBlocks  = Object.keys(fillCells).length;
+
+  // build grid HTML manually so we can color differently
+  var cellSize = 'var(--cell)';
+  var html = '<div class="panel"><div class="panel-title">STAIRCASE rise='+rise+' run='+run+'</div>';
+  html += '<div class="shape-wrap"><div class="shape-grid" style="grid-template-columns:repeat('+W+','+cellSize+')">';
+  for (var row = 0; row < H; row++) {
+    for (var x = 0; x < W; x++) {
+      var k = x+','+row;
+      var cls = 'sc';
+      if (stairCells[k]) cls = 'sc on';
+      else if (fillCells[k]) cls = 'sc' + ' ' + 'sc-fill';
+      html += '<div class="'+cls+'"></div>';
+    }
+  }
+  html += '</div></div>';
+  html += '<div class="block-count" style="margin-top:10px">'
+        + 'Step blocks (top): <b>'+stairBlocks+'</b> &nbsp; Fill blocks: <b>'+fillBlocks+'</b> &nbsp; Total: <b>'+(stairBlocks+fillBlocks)+'</b><br>'
+        + 'Angle: <b>'+Math.round(Math.atan2(rise,run)*180/Math.PI)+'&deg;</b></div>';
+
+  // show column heights table
+  html += '<div style="margin-top:12px;font-size:17px;color:var(--stone)">';
+  html += '<div style="font-family:\'Press Start 2P\',monospace;font-size:7px;color:var(--grass);margin-bottom:8px">COLUMN HEIGHTS</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+  for (var x = 0; x < run; x++) {
+    html += '<div style="background:#0a0a1a;border:1px solid var(--border);padding:4px 7px;font-size:16px">'
+          + 'x'+x+': <b style="color:var(--gold)">'+colHeights[x]+'</b></div>';
+  }
+  html += '</div></div></div>';
+
+  out.innerHTML = html;
+
+  // inject sc-fill style if not present
+  if (!document.getElementById('sc-fill-style')) {
+    var st = document.createElement('style');
+    st.id = 'sc-fill-style';
+    st.textContent = '.sc-fill { background: #3a2a15 !important; }';
+    document.head.appendChild(st);
+  }
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+runFind();
+</script>
+</body>
+</html>
